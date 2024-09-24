@@ -1,0 +1,32 @@
+{{- $tplfullname := (include "fullname" . ) -}}
+{{- $tplname := (include "name" . ) -}}
+{{- $volumeName := .Values.persistence.volumeName -}}
+{{- $storageClassName := .Values.persistence.storageClassName -}}
+{{- if .Values.persistence.enabled -}}
+{{- range .Values.persistence.pvcList }}
+{{- if empty .existingClaim }}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ $.Release.Name }}-{{ .name }}
+  labels:
+    app: {{ $tplname }}
+    diskid: {{ .diskid }}
+    chart: {{ $.Chart.Name }}-{{ $.Chart.Version | replace "+" "_" }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+spec:
+  accessModes:
+    - {{ .accessMode | quote }}
+  {{- if $volumeName }}
+  volumeName: {{ .name }}
+  {{- else if $storageClassName | default false }}
+  storageClassName: {{ $storageClassName }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .size | quote }}
+{{- end }}
+{{- end }}
+{{- end }}

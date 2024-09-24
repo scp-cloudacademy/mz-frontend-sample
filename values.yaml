@@ -1,0 +1,111 @@
+# required values
+replicaCount: 1
+image:
+  repository: "${dockerRegistryUrl}"
+  tag: "${dockerTag}"
+  pullPolicy: Always
+imagePullSecrets:
+  - name: devops-cicd
+# required values for service
+service:
+  name: httpd
+  type: ClusterIP
+  externalPort: 80
+  internalPort: 80
+  nodePort:
+# required values for ingress
+ingress:
+  enabled: false
+  domain:
+  path: /
+  pathType: Prefix
+  tls:
+    enabled: false
+    # Secrets must be manually created in the namespace.
+    secretName:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/affinity: cookie
+  addHosts:
+#    - host:
+#      path:/
+#      pathType:
+resources:
+  limits:
+    cpu: 1
+    memory: 2Gi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+persistence:
+  # if true, use a persistentVolumeClaim
+  enabled: false
+  pvcList:
+    - name: logs
+      existingVolumeClaim:
+      # Name of an existing PersistentVolumeClaim
+      accessMode: ReadWriteMany
+      mountPath: /var/log/nginx
+    - name: data
+      # Name of an existing PersistentVolumeClaim
+      existingVolumeClaim:
+      accessMode: ReadWriteMany
+      mountPath: /mnt
+nodeSelector:
+#  kubernetes.io/nodetype: app
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+# recommended values
+terminationGracePeriodSeconds: 30
+readinessProbe:
+  enabled: false
+  # httpGet, exec, tcpSocket
+  type: httpGet
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+  timeoutSeconds: 5
+  successThreshold: 1
+  path: /
+  command:
+livenessProbe:
+  enabled: false
+  # httpGet, exec, tcpSocket
+  type: httpGet
+  initialDelaySeconds: 600
+  periodSeconds: 10
+  failureThreshold: 3
+  timeoutSeconds: 5
+  path: /
+  command:
+lifecycle:
+  prestop:
+    enabled: false
+    command: ["/usr/sbin/nginx", "-s", "quit"]
+env:
+  envList:
+    TZ: Asia/Seoul
+#    key1: value1
+#    key2: value2
+hostAlias:
+#  - ip: 1.2.3.4
+#    hostnames:
+#      - hostname: a.com
+#  - ip: 1.2.3.0
+#    hostnames:
+#      - hostname: b.com
+#      - hostname: c.com
+automountServiceAccountToken: true
+networkPolicy:
+  enabled: false
+  ingress:
+    allowed: true
+# required values for autoscale
+autoscale:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70

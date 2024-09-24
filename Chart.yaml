@@ -1,0 +1,6 @@
+apiVersion: v2
+description: System Nginx chart for DevOps CI/CD
+keywords:
+- mz-frontend
+name: mz-frontend
+version: 1.0.1
